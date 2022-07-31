@@ -20,3 +20,4 @@ datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741826_1002.meta
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741828
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741828_1004.meta
+spark-base/sbt-1.7.1.tgz

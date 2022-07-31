@@ -2,7 +2,7 @@ FROM  bde2020/spark-base:3.3.0-hadoop3.3
 LABEL Maintainer="Erik Hurtado"
 LABEL Email="hurtado.erik@gmail.com"
 LABEL Description="based on BDE2020 spark base image"
-LABEL Description="Debian + openjdk8 + spark 3.3.0 + hadoop 3.3 to use spark shell and send jobs to BDE2020 based spark cluster"
+LABEL Description="alpine linux + openjdk8 + spark 3.3.0 + hadoop 3.3 to use spark shell and send jobs to BDE2020 based spark cluster"
 
 RUN apk add --no-cache openssh sed vim; \
     cd /etc/ssh/; ssh-keygen -A; \
@@ -18,14 +18,17 @@ RUN { \
     } > /usr/local/bin/entry_point.sh; \
     chmod +x /usr/local/bin/entry_point.sh;
 
-COPY image_env_setup.sh /root/
-RUN echo 'source /root/image_env_setup.sh' >> ~/.bashrc
+COPY hadoop-3.2.1.tar.gz /opt/
+RUN cd /opt; tar zxvf hadoop-3.2.1.tar.gz; ln -s hadoop-3.2.1 hadoop
 COPY sbt-1.7.1.tgz /opt/
 RUN cd /opt; tar zxvf sbt-1.7.1.tgz; ln -s sbt-1.7.1 sbt
 
+COPY image_env_setup.sh /root/
+RUN echo 'source /root/image_env_setup.sh' >> ~/.bashrc ; \
+    echo 'source /root/image_env_setup.sh' >> ~/.profile
+
 ENV TZ America/Santiago
-ENV ROOT_PASSWORD root
-ENV SPARK_HOME /opt/spark
+ENV ROOT_PASSWORD defaults
 EXPOSE 2222
 EXPOSE 22
 ENTRYPOINT ["entry_point.sh"]

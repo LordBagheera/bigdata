@@ -1,6 +1,6 @@
 FROM debian:stable
 LABEL Maintainer="Erik Hurtado"
-LABEL Email="erik.hurtado@inacapmail.cl"
+LABEL Email="hurtado.erik@gmail.com"
 LABEL Description="Debian + openjdk8 + spark 3.3.0 + hadoop 3.3 to use spark shell and send jobs to BDE2020 based spark cluster"
 RUN apt-get -y update
 RUN apt-get -y upgrade

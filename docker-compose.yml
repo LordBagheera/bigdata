@@ -30,6 +30,8 @@ services:
     environment:
       - TZ=America/Santiago
       - ROOT_PASSWORD=defaults
+    env_file:
+      - ./hadoop.env
     networks:
       - main
 
@@ -152,20 +154,71 @@ services:
     networks:
       - main
 
-#  datanode:
-#    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-#    container_name: datanode
-#    depends_on: 
-#      - namenode
-#    volumes:
-#      - ./datanode:/hadoop/dfs/data
-#      - ./shared:/mnt/shared
-#    env_file:
-#      - ./hadoop.env
-#    ports:
-#      - 9864:9864
-#    networks:
-#      - bigdata-net  
+  datanode-1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode-1
+    depends_on: 
+      - namenode
+    volumes:
+      - ./datanode-1:/hadoop/dfs/data
+      - ./shared:/mnt/shared
+    env_file:
+      - ./hadoop.env
+    ports:
+      - 9864:9864
+    networks:
+      - main  
+
+  datanode-2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode-2
+    depends_on: 
+      - namenode
+    volumes:
+      - ./datanode-2:/hadoop/dfs/data
+      - ./shared:/mnt/shared
+    env_file:
+      - ./hadoop.env
+    ports:
+      - 9865:9864
+    networks:
+      - main  
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
+      - 8032:8032
+    depends_on: 
+      - namenode
+      - datanode-1
+      - datanode-2
+    #environment:
+    #  SERVICE_PRECONDITION: "namenode:9870 datanode-1:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - main
+
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    depends_on: 
+      - namenode
+      - datanode-1
+      - datanode-2
+      - resourcemanager
+    ports:
+      - 8188:8188 # UI
+    #environment:
+    #  SERVICE_PRECONDITION: "namenode:9870 datanode:9864 resourcemanager:8088"
+    volumes:
+      - ./hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - main
 
 networks:
   main:

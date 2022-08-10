@@ -19,7 +19,7 @@ services:
 
   spark-client:
     build:
-      context: ./spark-base
+      context: ./spark-client
       dockerfile: Dockerfile
     image: lordbagheera/spark-client:3.3.0-hadoop3
     container_name: edge-1
@@ -30,6 +30,7 @@ services:
     environment:
       - TZ=America/Santiago
       - ROOT_PASSWORD=defaults
+      - SPARK_APPLICATION_ARGS=spark.eventLog.enabled=true:spark.eventLog.dir=hdfs://namenode:8020/shared/spark-logs
     env_file:
       - ./hadoop.env
     networks:
@@ -45,8 +46,9 @@ services:
       - 7077:7077
     environment:
       - INIT_DAEMON_STEP=setup_spark
-    #env_file:
-    #  - ./hadoop.env
+      - SPARK_APPLICATION_ARGS=spark.eventLog.enabled=true:spark.eventLog.dir=hdfs://namenode:8020/shared/spark-logs
+    env_file:
+      - ./hadoop.env
     networks:
       - main
       
@@ -61,8 +63,8 @@ services:
       - "8081:8081"
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
-    #env_file:
-    #  - ./hadoop.env
+    env_file:
+      - ./hadoop.env
     networks:
       - main
 
@@ -81,6 +83,23 @@ services:
     #  - ./hadoop.env
     networks:
       - main
+
+  spark-history:
+      image: bde2020/spark-history-server:3.3.0-hadoop3.3
+      container_name: spark-history-server
+      depends_on:
+        - spark-master
+      ports:
+        - "18081:18081"
+      environment:
+        - SPARK_APPLICATION_ARGS=spark.history.fs.logDirectory=hdfs://namenode:8020/shared/spark-events
+      env_file:
+        - ./hadoop.env
+      volumes:
+        - ./shared/spark-events:/tmp/spark-events
+        - ./shared:/mnt/shared
+      networks:
+        - main
 
   ftp-server:
     image: delfer/alpine-ftp-server
@@ -108,36 +127,36 @@ services:
     networks:
       - main
 
-  shell:
-    container_name: edge-2
-    build:
-      context: ./debian-spark-shell
-      dockerfile: Dockerfile
-    image: lordbagheera/debian-spark-shell:latest
-    volumes:
-      - ./shared:/mnt/shared
-    ports:
-      - 2223:2222
-    environment:
-      - TZ=America/Santiago
-      - ROOT_PASSWORD=defaults
-    env_file:
-      - ./hadoop.env
-    networks:
-      - main
-#
-#  phpmyadmin:
-#    image: phpmyadmin
-#    container_name: phpmyadmin
+#  shell:
+#    container_name: edge-2
+#    build:
+#      context: ./debian-spark-shell
+#      dockerfile: Dockerfile
+#    image: lordbagheera/debian-spark-shell:latest
 #    volumes:
 #      - ./shared:/mnt/shared
 #    ports:
-#      - "8888:80"
+#      - 2223:2222
 #    environment:
-#      - "PMA_ARBITRARY=1"
+#      - TZ=America/Santiago
+#      - ROOT_PASSWORD=defaults
+#    env_file:
+#      - ./hadoop.env
 #    networks:
-#      - bigdata-net
-#
+#      - main
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    volumes:
+      - ./shared:/mnt/shared
+    ports:
+      - "8888:80"
+    environment:
+      - "PMA_ARBITRARY=1"
+    networks:
+      - main
+
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
@@ -198,6 +217,13 @@ services:
     #  SERVICE_PRECONDITION: "namenode:9870 datanode-1:9864"
     env_file:
       - ./hadoop.env
+    volumes:
+      #- ./spark-defaults.conf:/spark/conf/spark-defaults.conf
+      - ./core-site.xml:/etc/hadoop/core-site.xml
+      - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      - ./yarn-site-2.xml:/etc/hadoop/yarn-site-2.xml
+      - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
     networks:
       - main
 

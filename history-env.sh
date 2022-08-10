@@ -1,0 +1,9 @@
+export SPARK_HOME=/spark
+export HADOOP_HOME=/opt/hadoop
+export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+export SBT_HOME=/opt/sbt
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$SBT_HOME/bin
+CORE_CONF_DIR=/mnt/shared/config
+HADOOP_CONF_DIR=/mnt/shared/config
+YARN_CONF_DIR=/mnt/shared/config
+SPARK_MASTER_HOST=spark-master

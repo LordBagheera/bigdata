@@ -6,6 +6,7 @@ services:
     container_name: nifi
     volumes:
       - ./shared:/mnt/shared
+      - ./nificonf:/config
     ports:
       - 8443:8443
     environment:
@@ -27,6 +28,7 @@ services:
       - ./shared:/mnt/shared
     ports:
       - 2222:2222
+      - 4040-4100:4040-4100
     environment:
       - TZ=America/Santiago
       - ROOT_PASSWORD=defaults
@@ -85,77 +87,21 @@ services:
       - main
 
   spark-history:
-      image: bde2020/spark-history-server:3.3.0-hadoop3.3
+      build:
+          context: ./spark-history
+          dockerfile: Dockerfile
+      image: lordbagheera/spark-history-server:3.3.0-hadoop3.3
       container_name: spark-history-server
       depends_on:
         - spark-master
       ports:
         - "18081:18081"
-      environment:
-        - SPARK_APPLICATION_ARGS=spark.history.fs.logDirectory=hdfs://namenode:8020/shared/spark-events
       env_file:
         - ./hadoop.env
       volumes:
-        - ./shared/spark-events:/tmp/spark-events
         - ./shared:/mnt/shared
       networks:
         - main
-
-  ftp-server:
-    image: delfer/alpine-ftp-server
-    container_name: bigdata-ftp
-    volumes:
-      - ./shared:/mnt/shared
-      - ./shared/ftp:/ftp/ftp
-    ports:
-      - "21:21"
-      - "21000-21010:21000-21010"
-    environment:
-      - "USERS=user|defaults"
-    networks:
-      - main
-
-  db:
-    image: mysql
-    container_name: mysql
-    volumes:
-      - ./shared:/mnt/shared
-    ports:
-      - "3306:3306"
-    environment:
-     - MYSQL_ROOT_PASSWORD=defaults
-    networks:
-      - main
-
-#  shell:
-#    container_name: edge-2
-#    build:
-#      context: ./debian-spark-shell
-#      dockerfile: Dockerfile
-#    image: lordbagheera/debian-spark-shell:latest
-#    volumes:
-#      - ./shared:/mnt/shared
-#    ports:
-#      - 2223:2222
-#    environment:
-#      - TZ=America/Santiago
-#      - ROOT_PASSWORD=defaults
-#    env_file:
-#      - ./hadoop.env
-#    networks:
-#      - main
-
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    volumes:
-      - ./shared:/mnt/shared
-    ports:
-      - "8888:80"
-    environment:
-      - "PMA_ARBITRARY=1"
-    networks:
-      - main
 
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
@@ -208,17 +154,14 @@ services:
     container_name: resourcemanager
     ports:
       - 8088:8088
-      - 8032:8032
     depends_on: 
+      - spark-master
       - namenode
       - datanode-1
       - datanode-2
-    #environment:
-    #  SERVICE_PRECONDITION: "namenode:9870 datanode-1:9864"
     env_file:
       - ./hadoop.env
     volumes:
-      #- ./spark-defaults.conf:/spark/conf/spark-defaults.conf
       - ./core-site.xml:/etc/hadoop/core-site.xml
       - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
       - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
@@ -227,24 +170,80 @@ services:
     networks:
       - main
 
-  historyserver:
-    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
-    container_name: historyserver
+  nodemanager:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
     depends_on: 
       - namenode
-      - datanode-1
-      - datanode-2
       - resourcemanager
-    ports:
-      - 8188:8188 # UI
-    #environment:
-    #  SERVICE_PRECONDITION: "namenode:9870 datanode:9864 resourcemanager:8088"
-    volumes:
-      - ./hadoop_historyserver:/hadoop/yarn/timeline
     env_file:
       - ./hadoop.env
+    deploy:
+      mode: global
+    labels:
+       traefik.docker.network: hbase
+       traefik.port: 8042
+    ports:
+      - 8042:8042
     networks:
       - main
+
+  db:
+    image: mysql
+    container_name: mysql
+    volumes:
+      - ./shared:/mnt/shared
+    ports:
+      - "3306:3306"
+    environment:
+     - MYSQL_ROOT_PASSWORD=defaults
+    networks:
+      - main
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    volumes:
+      - ./shared:/mnt/shared
+    ports:
+      - "8888:80"
+    environment:
+      - "PMA_ARBITRARY=1"
+    networks:
+      - main
+ 
+  ftp-server:
+    image: delfer/alpine-ftp-server
+    container_name: bigdata-ftp
+    volumes:
+      - ./shared:/mnt/shared
+      - ./shared/ftp:/ftp/ftp
+    ports:
+      - "21:21"
+      - "21000-21010:21000-21010"
+    environment:
+      - "USERS=user|defaults"
+    networks:
+      - main
+
+#  hadoop-history:
+#    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+#    container_name: hadoop-history-server
+#    depends_on: 
+#      - namenode
+#      - datanode-1
+#      - datanode-2
+#      - resourcemanager
+#    ports:
+#      - 8188:8188 # UI
+#    #environment:
+#    #  SERVICE_PRECONDITION: "namenode:9870 datanode:9864 resourcemanager:8088"
+#    volumes:
+#      - ./hadoop_historyserver:/hadoop/yarn/timeline
+#    env_file:
+#      - ./hadoop.env
+#    networks:
+#      - main
 
 networks:
   main:

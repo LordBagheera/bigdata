@@ -93,7 +93,7 @@ services:
       - ./core-site.xml:/etc/hadoop/core-site.xml
       - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
       - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
-      - ./yarn-site-2.xml:/etc/hadoop/yarn-site-2.xml
+      #- ./yarn-site-2.xml:/etc/hadoop/yarn-site-2.xml
       - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
     networks:
       - main
@@ -114,6 +114,22 @@ services:
       - 8042:8042
     networks:
       - main
+
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - ./core-site.xml:/etc/hadoop/core-site.xml
+      - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      #- ./yarn-site-2.xml:/etc/hadoop/yarn-site-2.xml
+      - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
+    ports:
+      - 8188:8188
+    networks:
+      - maingi
 
   db:
     image: mysql

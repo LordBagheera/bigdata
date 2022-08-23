@@ -26,7 +26,11 @@ COPY ./*.xml /opt/hadoop/etc/hadoop/
 COPY ./spark-defaults.conf /spark/conf/
 COPY image_env_setup.sh /root/
 RUN echo 'source /root/image_env_setup.sh' >> ~/.bashrc ; \
-    echo 'source /root/image_env_setup.sh' >> ~/.profile
+    echo 'source /root/image_env_setup.sh' >> ~/.profile; \
+    mkdir /root/.ssh
+COPY ./authorized_keys /root/.ssh/
+COPY ./id_rsa /root/.ssh/
+RUN chmod 0600 /root/.ssh/id_rsa
 
 ENV TZ America/Santiago
 ENV ROOT_PASSWORD defaults

@@ -9,7 +9,7 @@ ENV PASSWORD ThisIsAnUnS3cur3P4ssw0rd
 ENV JAVA_HOME /usr/lib/jvm/java-1.8-openjdk
 ENV PATH $JAVA_HOME/bin:$PATH
 ENV NIFI_HOME /opt/nifi
-COPY nifi-1.17.0-bin.zip /opt/
+COPY ../bins/nifi-1.17.0-bin.zip /opt/
 RUN cd /opt; unzip nifi-1.17.0-bin.zip; ln -s nifi-1.17.0 nifi; rm /opt/nifi-1.17.0-bin.zip && \
     mkdir $NIFI_HOME/database_repository && \
     mkdir $NIFI_HOME/flowfile_repository && \

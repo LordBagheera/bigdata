@@ -20,14 +20,10 @@ datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741826_1002.meta
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741828
 datanode/current/BP-2042799410-172.18.0.2-1658931609084/current/finalized/subdir0/subdir0/blk_1073741828_1004.meta
-spark-base/hadoop-3.2.1.tar.gz
-spark-base/sbt-1.7.1.tgz
-spark-base/spark-3.3.0-bin-hadoop3.tgz
-spark-client/hadoop-3.2.1.tar.gz
-spark-client/sbt-1.7.1.tgz
-spark-client/spark-3.3.0-bin-hadoop3.tgz
+datanode-2/
 namenode/
 datanode-1/
 datanode-1/
 hadoop_historyserver/
-shared/
+edge-1/
+bins/

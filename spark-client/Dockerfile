@@ -18,9 +18,9 @@ RUN { \
     } > /usr/local/bin/entry_point.sh; \
     chmod +x /usr/local/bin/entry_point.sh;
 
-COPY hadoop-3.2.1.tar.gz /opt/
+COPY ../bins/hadoop-3.2.1.tar.gz /opt/
 RUN cd /opt; tar zxvf hadoop-3.2.1.tar.gz; ln -s hadoop-3.2.1 hadoop
-COPY sbt-1.7.1.tgz /opt/
+COPY ../bins/sbt-1.7.1.tgz /opt/
 RUN cd /opt; tar zxvf sbt-1.7.1.tgz; ln -s sbt-1.7.1 sbt
 COPY ./*.xml /opt/hadoop/etc/hadoop/
 COPY ./spark-defaults.conf /spark/conf/

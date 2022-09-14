@@ -8,7 +8,6 @@ services:
     image: lordbagheera/alpine-nifi:1.17.0
     container_name: nifi
     volumes:
-      - ./shared:/mnt/shared
       - ./nificonf:/includes
     ports:
       - 8443:8443
@@ -22,7 +21,7 @@ services:
     image: lordbagheera/spark-client:3.3.0-hadoop3
     container_name: edge-1
     volumes:
-      - ./shared:/mnt/shared
+      - ./edge-1:/mnt/edge-1
     ports:
       - 2222:2222
       - 4040-4100:4040-4100
@@ -40,7 +39,6 @@ services:
     container_name: namenode
     volumes:
       - ./namenode:/hadoop/dfs/name
-      - ./shared:/mnt/shared
     environment:
       - CLUSTER_NAME=bigdata
     env_file:
@@ -57,7 +55,6 @@ services:
       - namenode
     volumes:
       - ./datanode-1:/hadoop/dfs/data
-      - ./shared:/mnt/shared
     env_file:
       - ./hadoop.env
     ports:
@@ -72,7 +69,6 @@ services:
       - namenode
     volumes:
       - ./datanode-2:/hadoop/dfs/data
-      - ./shared:/mnt/shared
     env_file:
       - ./hadoop.env
     ports:
@@ -132,8 +128,6 @@ services:
   db:
     image: mysql
     container_name: mysql
-    volumes:
-      - ./shared:/mnt/shared
     ports:
       - "3306:3306"
     environment:
@@ -145,8 +139,6 @@ services:
   phpmyadmin:
     image: phpmyadmin
     container_name: phpmyadmin
-    volumes:
-      - ./shared:/mnt/shared
     ports:
       - "8888:80"
     environment:

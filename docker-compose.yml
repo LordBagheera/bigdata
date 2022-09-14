@@ -5,7 +5,7 @@ services:
     build:
       context: ./nifi
       dockerfile: Dockerfile
-    image: LordBagheera/alpine-nifi:1.17.0
+    image: lordbagheera/alpine-nifi:1.17.0
     container_name: nifi
     volumes:
       - ./shared:/mnt/shared
@@ -19,7 +19,7 @@ services:
     build:
       context: ./spark-client
       dockerfile: Dockerfile
-    image: LordBagheera/spark-client:3.3.0-hadoop3
+    image: lordbagheera/spark-client:3.3.0-hadoop3
     container_name: edge-1
     volumes:
       - ./shared:/mnt/shared
@@ -123,7 +123,6 @@ services:
       - ./core-site.xml:/etc/hadoop/core-site.xml
       - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
       - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
-      #- ./yarn-site-2.xml:/etc/hadoop/yarn-site-2.xml
       - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
     ports:
       - 8188:8188

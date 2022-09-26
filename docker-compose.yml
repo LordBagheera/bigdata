@@ -125,6 +125,18 @@ services:
     networks:
       - main
 
+  spark-notebook:
+    image: bde2020/hadoop-spark-notebook:2.0.0-hadoop3.2.1-java8
+    container_name: spark-notebook
+    volumes:
+      -./notebooks:/data/notebooks
+    environment:
+      - NOTEBOOKS_DIR=/data/notebooks
+    env_file:
+      - ./hadoop.env
+    ports:
+      - 9001:9001
+
   db:
     image: mysql
     container_name: mysql

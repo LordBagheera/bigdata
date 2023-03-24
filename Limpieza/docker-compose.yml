@@ -1,0 +1,146 @@
+version: "3"
+
+networks:
+  main:
+    driver: bridge
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    volumes:
+      - ./volumes/namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=bigdata
+    env_file:
+      - ./conf/hadoop.env
+    ports:
+      - 9870:9870
+    networks:
+      - main
+
+  datanode-1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode-1
+    depends_on: 
+      - namenode
+    volumes:
+      - ./volumes/data/node-1:/hadoop/dfs/data
+    env_file:
+      - ./conf/hadoop.env
+    ports:
+      - 9864:9864
+    networks:
+      - main  
+
+  datanode-2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode-2
+    depends_on: 
+      - namenode
+    volumes:
+      - ./volumes/data/node-2:/hadoop/dfs/data
+    env_file:
+      - ./conf/hadoop.env
+    ports:
+      - 9865:9864
+    networks:
+      - main  
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
+    depends_on: 
+      - namenode
+    env_file:
+      - ./conf/hadoop.env
+    volumes:
+      - ./conf/core-site.xml:/etc/hadoop/core-site.xml
+      - ./conf/yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      - ./conf/mapred-site.xml:/etc/hadoop/mapred-site.xml
+    networks:
+      - main
+
+  nodemanager:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    depends_on: 
+      - resourcemanager
+    env_file:
+      - ./conf/hadoop.env
+    deploy:
+      mode: global
+    labels:
+       traefik.docker.network: hbase
+       traefik.port: 8042
+    ports:
+      - 8042:8042
+    networks:
+      - main
+
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    env_file:
+      - ./conf/hadoop.env
+    volumes:
+      - ./conf/core-site.xml:/etc/hadoop/core-site.xml
+      - ./conf/yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      - ./conf/mapred-site.xml:/etc/hadoop/mapred-site.xml
+    ports:
+      - 8188:8188
+    networks:
+      - main
+
+  spark-client:
+    build:
+      context: ./spark-client
+      dockerfile: Dockerfile
+    image: lordbagheera/spark-client:3.3.0-hadoop3.2.1-java8
+    container_name: edge-1
+    volumes:
+      - ./volumes/edge-1:/mnt/edge-1
+    ports:
+      - 2222:2222
+      - 4040-4100:4040-4100
+    environment:
+      - TZ=America/Santiago
+      - ROOT_PASSWORD=defaults
+    env_file:
+      - ./conf/hadoop.env
+    networks:
+      - main
+  
+  nifi:
+    build:
+      context: ./nifi
+      dockerfile: Dockerfile
+    image: lordbagheera/alpine-nifi:1.17.0
+    container_name: nifi
+    #volumes:
+    #  - ./nificonf:/includes
+    ports:
+      - 8443:8443
+    networks:
+      - main
+  ## PASSWORD ThisIsAnUnS3cur3P4ssw0rd
+
+  jupyter-lab:
+    build:
+        context: ./jupyter
+    depends_on:
+        - spark-master
+    volumes:
+        - jupyter_data:/home/jovyan/work:rw
+    ports:
+        - 8888:8888
+    networks:
+        - spark-network
+    environment:
+        - JUPYTER_ENABLE_LAB=yes
+        - PYSPARK_PYTHON=/usr/bin/python3
+        - PYSPARK_DRIVER_PYTHON=/opt/conda/bin/python

@@ -1,4 +1,4 @@
-# bigdata
+# Bigdata
 Pseudo cluster for big data operations, simulating enterprise system
 
 Thanks to BDE2020 for base images and documentation-
@@ -7,13 +7,14 @@ this includes (so far)
 * Homebrew Apache Nifi orchestrator 
 * Homebrew SSH server as client and edge/ingest server
 * Hadoop HDFS cluster with 2 nodes from BDE2020
-* Hadoop YARN with 1 cluster configured and history server from BDE2020
+* Hadoop YARN with 2 nodes configured and history server from BDE2020
 * Hadoop Nodemanager from BDE2020
-* MySql Server
-* Phpmyadmin
+* HIVE2 server
+* Jupyter with spark support(local mode only) and hdfs support
 
 NIFI server: 
     *docker name : nifi
+
     *url https://localhost:8443/nifi/login
     *    user: root
     *    password: ThisIsAnUnS3cur3P4ssw0rd
@@ -23,42 +24,57 @@ NIFI server:
     *    -answer 'yes' when prompted
 
 EDGE Server: 
-    *docker name : edge-1
-    *SSH server at localhost port 2222
+
+    * Docker name : edge-1
+    * SSH server at localhost port 2222
     *    user: root
     *    password: defaults
-    *Contains an HDFS installation, and a local spark environment
-    *Configured to be transparent with YARN and namenode
-    *Spark commands use YARN as master by default
+    * Contains an HDFS installation, and a local spark environment
+    * Configured to be transparent with YARN and namenode
+    * Spark commands use YARN as master by default
 
 HDFS Cluster: 
-    *docker name : namenode, datanode-1, datanode-2
-    *url http://localhost:9870
-    *ACL's disabled
-    *is necesary to create some dirs in order to startup, see the logs
-    *TODO: specify complete steps
 
-HADOOP YARN server: docker name : resourcemanager, historyserver
-    *url http://localhost:8088/cluster
-    *ACL's disabled
-    *can monitoring status of application and serve correct yarn logs to EDGE
+    * Docker name : namenode, datanode-1, datanode-2
+    *   url http://localhost:9870
+    * ACL's disabled
+    * TODO: specify complete steps
 
-HADOOP Nodemanager:
-    *docker name : nodemanager
-    *url http://localhost:8042
-    *ACL's disabled
-    *configured as 1 cluster/1 rack
+HADOOP YARN server:
 
-MySql Server:
-    *docker name : mysql
-    *SQL server available at localhost:3306
-    *    user: root
-    *    password: defaults
-    *vanilla configuration
+    * Docker name : resourcemanager, historyserver
+    *   url http://localhost:8088/cluster
+    *   ACL's disabled
+    * Can monitoring status of application and serve correct yarn logs to EDGE
 
-phpmyadmin:
-    *docker name : phpmyadmin
-    *url http://localhost:8888/
-    *    user & password as set on MySql
+HADOOP Nodemanager 1 & 2:
+
+    * Docker name : nodemanager-1, nodemanager-2
+    *    url http://localhost:8042
+    *    url http://localhost:8043
+    *    ACL's disabled
+    * Configured as 1 cluster/1 rack
+
+Hive:   
+
+    * Docker name : hive-server, hive-metastore, hive-metastore-postgresql
+    * HIVE 2 Server
+    * HIVE 2 metastore
+    * HIVE 2 postgress metastore
+    * ACL's disabled
+    * Conection example:
+    *       $ beeline -u jdbc:hive2://hive-server:10000
+            Connecting to jdbc:hive2://hive-server:10000
+            Connected to: Apache Hive (version 2.3.2)
+            Driver: Hive JDBC (version 2.3.9)
+            Transaction isolation: TRANSACTION_REPEATABLE_READ
+            Beeline version 2.3.9 by Apache Hive
+            0: jdbc:hive2://hive-server:10000>
+
+Jupyter:
+
+    * Docker name : jupyspark
+    *    url http://localhost:8888   I
+    *    see docker container log for token
 
 This cover most of the services that I use as part of my data engineer day2day work.

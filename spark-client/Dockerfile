@@ -18,18 +18,29 @@ RUN { \
     } > /usr/local/bin/entry_point.sh; \
     chmod +x /usr/local/bin/entry_point.sh;
 
-COPY ./hadoop-3.2.1.tar.gz /opt/
-RUN cd /opt; tar zxvf hadoop-3.2.1.tar.gz; ln -s hadoop-3.2.1 hadoop
-COPY ./sbt-1.7.1.tgz /opt/
-RUN cd /opt; tar zxvf sbt-1.7.1.tgz; ln -s sbt-1.7.1 sbt
-COPY ./*.xml /opt/hadoop/etc/hadoop/
-COPY ./spark-defaults.conf /spark/conf/
-COPY image_env_setup.sh /root/
+# Download and install Hadoop
+RUN wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz -O /opt/hadoop-3.2.1.tar.gz \
+    && cd /opt \
+    && tar zxvf hadoop-3.2.1.tar.gz \
+    && ln -s hadoop-3.2.1 hadoop
+
+# Download and install sbt
+RUN wget https://github.com/sbt/sbt/releases/download/v1.7.1/sbt-1.7.1.tgz -O /opt/sbt-1.7.1.tgz \
+    && cd /opt \
+    && tar zxvf sbt-1.7.1.tgz \
+    && ln -s sbt-1.7.1 sbt
+
+
+COPY ./conf/*.xml /opt/hadoop/etc/hadoop/
+COPY ./conf/spark-defaults.conf /spark/conf/
+COPY ./conf/image_env_setup.sh /root/
 RUN echo 'source /root/image_env_setup.sh' >> ~/.bashrc ; \
     echo 'source /root/image_env_setup.sh' >> ~/.profile; \
     mkdir /root/.ssh
-COPY ./authorized_keys /root/.ssh/
-COPY ./id_rsa /root/.ssh/
+    
+#Copy pregenerated keys for use with Nifi
+COPY ./conf/authorized_keys /root/.ssh/
+COPY ./conf/id_rsa /root/.ssh/
 RUN chmod 0600 /root/.ssh/id_rsa
 
 ENV TZ America/Santiago

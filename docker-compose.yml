@@ -1,48 +1,19 @@
 version: "3"
 
+networks:
+  main:
+    driver: bridge
+
 services:
-  nifi:
-    build:
-      context: ./nifi
-      dockerfile: Dockerfile
-    image: lordbagheera/alpine-nifi:1.17.0
-    container_name: nifi
-    volumes:
-      - ./nificonf:/includes
-    ports:
-      - 8443:8443
-    networks:
-      - main
-
-  spark-client:
-    build:
-      context: ./spark-client
-      dockerfile: Dockerfile
-    image: lordbagheera/spark-client:3.3.0-hadoop3
-    container_name: edge-1
-    volumes:
-      - ./edge-1:/mnt/edge-1
-    ports:
-      - 2222:2222
-      - 4040-4100:4040-4100
-    environment:
-      - TZ=America/Santiago
-      - ROOT_PASSWORD=defaults
-      - SPARK_APPLICATION_ARGS=spark.eventLog.enabled=true:spark.eventLog.dir=hdfs://namenode:8020/shared/spark-logs
-    env_file:
-      - ./hadoop.env
-    networks:
-      - main
-
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
     volumes:
-      - ./namenode:/hadoop/dfs/name
+      - ./volumes/namenode:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=bigdata
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     ports:
       - 9870:9870
     networks:
@@ -54,9 +25,9 @@ services:
     depends_on: 
       - namenode
     volumes:
-      - ./datanode-1:/hadoop/dfs/data
+      - ./volumes/data/node-1:/hadoop/dfs/data
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     ports:
       - 9864:9864
     networks:
@@ -68,9 +39,9 @@ services:
     depends_on: 
       - namenode
     volumes:
-      - ./datanode-2:/hadoop/dfs/data
+      - ./volumes/data/node-2:/hadoop/dfs/data
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     ports:
       - 9865:9864
     networks:
@@ -84,22 +55,22 @@ services:
     depends_on: 
       - namenode
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     volumes:
-      - ./core-site.xml:/etc/hadoop/core-site.xml
-      - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
-      - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
-      - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
+      - ./conf/core-site.xml:/etc/hadoop/core-site.xml
+      - ./conf/yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      - ./conf/mapred-site.xml:/etc/hadoop/mapred-site.xml
     networks:
       - main
 
-  nodemanager:
+  nodemanager-1:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
-    container_name: nodemanager
+    container_name: nodemanager-1
     depends_on: 
       - resourcemanager
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     deploy:
       mode: global
     labels:
@@ -110,54 +81,129 @@ services:
     networks:
       - main
 
+  nodemanager-2:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager-2
+    depends_on: 
+      - resourcemanager
+    env_file:
+      - ./conf/hadoop.env
+    deploy:
+      mode: global
+    labels:
+       traefik.docker.network: hbase
+       traefik.port: 8042
+    ports:
+      - 8043:8042
+    networks:
+      - main
+
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
+    depends_on: 
+      - resourcemanager
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
     volumes:
-      - ./core-site.xml:/etc/hadoop/core-site.xml
-      - ./yarn-site.xml:/etc/hadoop/yarn-site.xml
-      - ./hdfs-site.xml:/etc/hadoop/hdfs-site.xml
-      - ./mapred-site.xml:/etc/hadoop/mapred-site.xml
+      - ./conf/core-site.xml:/etc/hadoop/core-site.xml
+      - ./conf/yarn-site.xml:/etc/hadoop/yarn-site.xml
+      - ./conf/hdfs-site.xml:/etc/hadoop/hdfs-site.xml
+      - ./conf/mapred-site.xml:/etc/hadoop/mapred-site.xml
     ports:
       - 8188:8188
     networks:
       - main
 
-  spark-notebook:
-    image: bde2020/hadoop-spark-notebook:2.0.0-hadoop3.2.1-java8
-    container_name: spark-notebook
+  spark-client:
+    build:
+      context: ./spark-client
+      dockerfile: Dockerfile
+    image: lordbagheera/spark-client:3.3.0-hadoop3.2.1-java8
+    container_name: edge-1
+    depends_on: 
+      - historyserver
     volumes:
-      -./notebooks:/data/notebooks
+      - ./volumes/edge-1:/mnt/edge-1
+    ports:
+      - 2222:2222
+      - 4040-4100:4040-4100
     environment:
-      - NOTEBOOKS_DIR=/data/notebooks
+      - TZ=America/Santiago
+      - ROOT_PASSWORD=defaults
     env_file:
-      - ./hadoop.env
+      - ./conf/hadoop.env
+    networks:
+      - main
+  
+  nifi:
+    build:
+      context: ./nifi
+      dockerfile: Dockerfile
+    image: lordbagheera/alpine-nifi:1.17.0
+    container_name: nifi
+    depends_on: 
+      - hive-server   
+    #volumes:
+    #  - ./nificonf:/includes
     ports:
-      - 9001:9001
+      - 8443:8443
+    networks:
+      - main
+  ## PASSWORD ThisIsAnUnS3cur3P4ssw0rd
 
-  db:
-    image: mysql
-    container_name: mysql
+  jupyspark:
+    image: jupyter/all-spark-notebook:spark-3.3.0
+    container_name: jupyspark
+    depends_on: 
+      - hive-server    
+    volumes:
+      - ./volumes/jovian:/home/jovian
+      - ./conf:/usr/local/cluster_conf
+    env_file:
+      - ./conf/jupyspark.env
     ports:
-      - "3306:3306"
-    environment:
-     - MYSQL_ROOT_PASSWORD=defaults
-     - MYSQL_ROOT_HOST=%
+      - 8888:8888
     networks:
       - main
 
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    ports:
-      - "8888:80"
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
+    depends_on: 
+      - namenode
+      - hive-metastore
+    env_file:
+      - ./conf/hadoop.env
     environment:
-      - "PMA_ARBITRARY=1"
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
     networks:
       - main
- 
-networks:
-  main:
-    driver: bridge
+
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    depends_on: 
+      - namenode
+      - hive-metastore-postgresql
+    env_file:
+      - ./conf/hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    #environment:
+      #SERVICE_PRECONDITION: "namenode:50070 datanode:50075"
+      #hive-metastore-postgresql:5432"
+    ports:
+      - "9083:9083"
+    networks:
+      - main
+
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    container_name: hive-metastore-postgresql
+    depends_on: 
+      - historyserver
+    networks:
+      - main

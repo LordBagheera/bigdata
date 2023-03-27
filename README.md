@@ -1,4 +1,4 @@
-# bigdata
+# Bigdata
 Pseudo cluster for big data operations, simulating enterprise system
 
 Thanks to BDE2020 for base images and documentation-
@@ -62,6 +62,14 @@ Hive:
     * HIVE 2 metastore
     * HIVE 2 postgress metastore
     * ACL's disabled
+    * Conection example:
+    *       $ beeline -u jdbc:hive2://hive-server:10000
+            Connecting to jdbc:hive2://hive-server:10000
+            Connected to: Apache Hive (version 2.3.2)
+            Driver: Hive JDBC (version 2.3.9)
+            Transaction isolation: TRANSACTION_REPEATABLE_READ
+            Beeline version 2.3.9 by Apache Hive
+            0: jdbc:hive2://hive-server:10000>
 
 Jupyter:
 

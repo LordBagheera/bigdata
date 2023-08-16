@@ -143,9 +143,9 @@ services:
     image: lordbagheera/alpine-nifi:1.17.0
     container_name: nifi
     depends_on: 
-      - hive-server   
-    #volumes:
-    #  - ./nificonf:/includes
+      - hive-server
+    volumes:
+      - ./volumes/nifi/extra_lib:/opt/nifi/extra_lib
     ports:
       - 8443:8443
     networks:
@@ -158,7 +158,7 @@ services:
     depends_on: 
       - hive-server    
     volumes:
-      - ./volumes/jovian:/home/jovian
+      - ./volumes/jovyan:/home/jovyan
       - ./conf:/usr/local/cluster_conf
     env_file:
       - ./conf/jupyspark.env
